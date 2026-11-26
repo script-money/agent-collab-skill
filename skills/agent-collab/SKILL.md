@@ -16,9 +16,10 @@ explicit user authorization.
 |---|---|---|
 | Light | one agent, reversible, small | skip this skill |
 | Standard | multi-file feature, refactor, anything delegated or independently reviewed | sections 1–4 |
-| Stateful | can leave external state partly changed (payments, migrations, deploys, external API writes, data deletion) | Standard + `references/stateful-changes.md`, read before any code |
+| Stateful | can leave external state partly changed (payments, migrations, deploys, external API writes, data deletion) | Standard + [stateful changes](references/stateful-changes.md), read before any code |
 
-When unsure, pick the higher tier.
+Choose by reachable effects; when unsure, pick the higher tier. A plan-only
+request ends with the plan.
 
 ## 1. Plan (before any code)
 
@@ -26,15 +27,32 @@ Write a short plan file (project `docs/` or a scratch path) with:
 
 1. **Goal and non-goals**: one paragraph, plus what is explicitly out of scope.
 2. **Acceptance criteria**: observable and runnable (commands, expected output,
-   behaviors). Written before implementation so the reviewer can use them.
+   behaviors). Measure the intent, not a proxy met by moving code (count write
+   entry points, not lines in one file).
 3. **Map**: files, callers, contracts and docs touched; base revision and any
-   uncommitted changes.
+   uncommitted changes. Aim for the smallest change that delivers the behavior.
 4. **Slices**: ordered phases, each with one owner and a disjoint write set.
 5. **Decisions and open questions**: each with rationale. Ask the user only when
    the answer changes the result; otherwise decide, record it, move on.
-6. **Risks and tier** (section 0).
+6. **Operating model and risks**: supported entry points, workers, failure modes
+   and exclusions with how each is enforced. Define what would block acceptance.
 
-Get the user's approval of the plan when scope is large or ambiguity is material.
+Get user approval when scope is large, ambiguity is material, or a scope cut or
+exclusion weakens the user's guarantees. For Stateful, approve a one-page
+summary: write entry points, exclusions, residual risks.
+
+**Team**: unless the user already chose, ask once during planning for the whole
+team (lead, implementer, reviewer), offering the presets in AGENTS.md as options.
+Record the choice in the plan. Later role changes go back to the user.
+
+**Review bar**: in the same round, ask what may block acceptance, so review does
+not grow a simple request into endless detail work:
+
+1. Basic: acceptance criteria and correctness of the requested behavior
+2. Standard: + failure paths, authorization, secrets, doc/code mismatch (default)
+3. Strict: + every reachable edge, concurrency, recovery (default for Stateful)
+
+Anything outside the bar is polish: recorded, never blocking, fixed only on request.
 
 ## 2. Lead
 
@@ -44,9 +62,10 @@ and sign-off. The lead:
 - does the design itself, or uses the strongest available model for it; never
   delegates the plan;
 - is the single writer for any shared path or contract; parallel workers get
-  disjoint write sets;
+  disjoint write sets and agreed interfaces;
 - turns every finding into a violated invariant and a mechanism, not a task list
   forwarded verbatim; walks sibling paths of each finding before assigning a fix;
+- fixes small mechanical findings directly and includes them in the reviewed revision;
 - does not skip a gate to save a round, and does not self-certify its own code;
 - honors explicit model choices from the user; if a model or tool is
   unavailable, reports it and asks instead of silently switching;
@@ -57,11 +76,10 @@ and sign-off. The lead:
 - **Implementer**: runs one phase end to end, follows the plan, never invents
   semantics. An unspecified case goes back to the lead as a question, not into
   code. A fix that changes behavior updates the plan first, then code, then tests.
-- **Reviewer**: read-only, works on a fixed revision, uses a different model
-  family from the implementer, and stays the same across rounds so probes are
-  comparable. Reviews everything in one pass instead of drip-feeding findings.
-  May not set new requirements.
-- **Briefs are self-contained** (templates in `references/briefs.md`): goal and
+- **Reviewer**: read-only, works on a pinned revision, preferably a different
+  model family from the implementer (user role assignments win). Reviews
+  everything in one pass. May not set new requirements.
+- **Briefs are self-contained** (templates in [briefs.md](references/briefs.md)): goal and
   exclusions, files and callers, base revision and uncommitted changes, accepted
   decisions with rationale, acceptance criteria, verification commands,
   authorized operations, expected reply format. Keep a task to about ten items,
@@ -69,32 +87,32 @@ and sign-off. The lead:
 - **Interruption**: if a worker stops or hits a limit, the lead reads
   `git diff`, records what is done, half done and failing, and hands that to the
   replacement. On resume, confirm the working tree before retrying.
-- Tests written only by the implementer share its blind spots. Reviewer probes
-  that found a bug are committed as tests too.
+- **Test author**: start independent test work once the public contract is stable.
+  Extend existing coverage for a demonstrable gap. If the same model also
+  reviews, give review to a fresh task that did not write the tests, and say so.
 
 ## 4. Accept
 
-1. **Fix the revision**: record `git diff | shasum` (or the commit) and the exact
-   test commands with the review request. If the tree is uncommitted, ask before
-   committing.
-2. **Review pass**: the reviewer checks every acceptance criterion, edge case,
-   secret leak, authorization path and doc/code mismatch. Each finding is tagged
-   `blocker` or `polish` and gives location, violated invariant, reproducer and
-   user impact.
-3. **Classify** each finding: patch regression, existing issue blocking the
-   requested behavior, or separate finding. Fix the first two, record the third,
-   ask before expanding scope.
-4. **Fix classes, not instances.** The same invariant failing twice means the
-   mechanism is wrong: stop patching and revise the design.
-5. **Narrow re-verification** of the previous findings is mandatory and is not
-   folded into the next phase's audit. Do not start phase N+1 on open blockers.
-6. **Convergence budget**: after two fix-and-review cycles in a phase without a
-   clean pass, stop and report full state and options (redesign, narrow scope,
-   ship disabled/shadow-only) to the user.
-7. **Done** means: acceptance criteria demonstrated by commands run on the
-   integrated revision, no in-scope blockers from the requested review, failed or
-   skipped checks reported accurately (never converted to success with
-   `|| true`), and remaining verification limits stated.
-
-Final report to the user: revision, changed files, checks run and failed,
-decisions made, assumptions, unresolved risks, and what needs their decision.
+1. **Pin the revision.** A commit, or base plus `git diff | shasum` covering
+   staged and relevant untracked files; ask before committing. Give the reviewer
+   the acceptance criteria and verification commands.
+2. **Review once against the agreed bar.** Each finding: location, violated
+   invariant, reproducer, impact. A reachable violation within the bar is a blocker. Only an exclusion listed in the approved
+   plan may be recorded as residual risk, with evidence it is enforced.
+3. **Classify and repair.** Fix patch regressions and existing issues that block
+   the requested behavior; record other findings and ask before expanding scope.
+   Inventory all callers sharing the failed invariant, fix their common boundary,
+   and commit a structural check (grep, import guard, single-caller test) that
+   no sibling path bypasses it. A recurring failure means redesign, not a patch.
+4. **Re-verify on the integrated fix.** Recheck the reproducer, shared mechanism,
+   direct neighbors and regressions introduced by the fix. Broaden review if
+   the design or affected surface changes. Resolve blockers before advancing.
+5. **Bound rework.** Count one cycle per fix followed by re-review. Allow up to
+   two cycles per phase and three across the task. Carry the count through scope
+   cuts and phase renames. If blockers persist at either limit, report the
+   evidence and options for redesign, reduced scope or disabled delivery.
+   Only the user can extend the budget. Exhaustion never waives a blocker.
+6. **Sign off.** Demonstrate the criteria on the integrated revision. Report files,
+   decisions, failed or skipped checks (never masked with `|| true`),
+   verification limits and remaining risks.
+   Identify any pending decision and whether the requested review cleared blockers.
