@@ -13,7 +13,7 @@ Shared boundary and callers affected by this fix: <paths or none>
 Accepted decisions (with rationale): <list>
 Findings to fix (id, invariant, reproducer, status, mechanism to use): <list, <=10>
 Acceptance criteria: <commands + expected result>
-Verification to run: <exact commands>
+Verification to run: <exact commands, each with a timeout>
 Authorized operations: <e.g. local edits, mocked tests>   Forbidden: <live calls, push, commit>
 Unspecified case? Stop and ask; do not invent semantics.
 Return: revision/diff hash, changed files, checks run and failed, assumptions, open risks.
@@ -35,7 +35,7 @@ Return: behavior exercised, old-revision failure for regressions, checks and lim
 Role: read-only reviewer. Do not edit files.
 Revision under review: <integrated commit or complete identified snapshot>
 Plan and acceptance criteria: <path>
-Test commands: <exact commands>
+Test commands: <exact commands, each with a timeout; a timeout is a failed check>
 Review bar: <basic|standard|strict, from the plan>. Outside the bar = polish, never blocker.
 Check in one pass everything the bar covers.
 For stateful changes, trace all mutation paths and verify contract evidence,
