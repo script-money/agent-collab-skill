@@ -28,12 +28,14 @@ Write a short plan file (project `docs/` or a scratch path) with:
 1. **Goal and non-goals**: one paragraph, plus what is explicitly out of scope.
 2. **Acceptance criteria**: observable and runnable (commands, expected output,
    behaviors). Measure the intent, not a proxy met by moving code (count write
-   entry points, not lines in one file).
+   entry points, not lines in one file). Each criterion names the command or
+   evidence that shows it; one that depends on a review names that review.
 3. **Map**: files, callers, contracts and docs touched; base revision and any
    uncommitted changes. Aim for the smallest change that delivers the behavior.
 4. **Slices**: ordered phases, each with one owner and a disjoint write set.
 5. **Decisions and open questions**: each with rationale. Ask the user only when
    the answer changes the result; otherwise decide, record it, move on.
+   Decisions resting on external facts cite the source or are marked unverified.
 6. **Operating model and risks**: supported entry points, workers, failure modes
    and exclusions with how each is enforced. Define what would block acceptance.
 
@@ -87,6 +89,10 @@ and sign-off. The lead:
 - **Interruption**: if a worker stops or hits a limit, the lead reads
   `git diff`, records what is done, half done and failing, and hands that to the
   replacement. On resume, confirm the working tree before retrying.
+- **Checks are time-boxed**: run tests and long commands with a timeout sized
+  from their normal duration; a timeout is a failed check. Background waits get
+  a deadline; when it passes, inspect, stop the job and tell the user. Tests of
+  loops inject time instead of sleeping.
 - **Test author**: start independent test work once the public contract is stable.
   Extend existing coverage for a demonstrable gap. If the same model also
   reviews, give review to a fresh task that did not write the tests, and say so.
@@ -104,6 +110,9 @@ and sign-off. The lead:
    Inventory all callers sharing the failed invariant, fix their common boundary,
    and commit a structural check (grep, import guard, single-caller test) that
    no sibling path bypasses it. A recurring failure means redesign, not a patch.
+   A fix stays within the finding's mechanism. If closing a blocker needs a new
+   entry point, external call, dependency or feature, that is a design change:
+   update the plan and ask before coding it.
 4. **Re-verify on the integrated fix.** Recheck the reproducer, shared mechanism,
    direct neighbors and regressions introduced by the fix. Broaden review if
    the design or affected surface changes. Resolve blockers before advancing.
@@ -112,6 +121,10 @@ and sign-off. The lead:
    cuts and phase renames. If blockers persist at either limit, report the
    evidence and options for redesign, reduced scope or disabled delivery.
    Only the user can extend the budget. Exhaustion never waives a blocker.
+   When the user caps review rounds, changes made after the last review are
+   unreviewed: report them as such ("N blockers fixed by the lead, not
+   re-verified"), keep criteria that depend on review open, and offer a narrow
+   re-verify; the user decides.
 6. **Sign off.** Demonstrate the criteria on the integrated revision. Report files,
    decisions, failed or skipped checks (never masked with `|| true`),
    verification limits and remaining risks.
