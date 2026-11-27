@@ -81,14 +81,13 @@ and sign-off. The lead:
 - **Reviewer**: read-only, works on a pinned revision, preferably a different
   model family from the implementer (user role assignments win). Reviews
   everything in one pass. May not set new requirements.
-- **Briefs are self-contained** (templates in [briefs.md](references/briefs.md)): goal and
-  exclusions, files and callers, base revision and uncommitted changes, accepted
-  decisions with rationale, acceptance criteria, verification commands,
-  authorized operations, expected reply format. Keep a task to about ten items,
-  grouped by shared mechanism.
+- **Launching**: use the host tool's agent, handoff or advisor features to start
+  and resume workers; this skill supplies what goes into the brief and the gates.
+- **Briefs are self-contained**: use the templates in [briefs.md](references/briefs.md).
+  Keep a task to about ten items, grouped by shared mechanism.
 - **Interruption**: if a worker stops or hits a limit, the lead reads
   `git diff`, records what is done, half done and failing, and hands that to the
-  replacement. On resume, confirm the working tree before retrying.
+  replacement with the host's handoff. On resume, confirm the working tree before retrying.
 - **Checks are time-boxed**: run tests and long commands with a timeout sized
   from their normal duration; a timeout is a failed check. Background waits get
   a deadline; when it passes, inspect, stop the job and tell the user. Tests of

@@ -7,7 +7,7 @@ agent that reads `SKILL.md` skills (Claude Code, Codex, Antigravity, ...).
 ```
 skills/agent-collab/
   SKILL.md                       plan -> lead -> collaborate -> accept (~100 lines)
-  references/briefs.md           implementer / test author / reviewer / handoff templates
+  references/briefs.md           implementer / test author / reviewer templates
   references/stateful-changes.md optional module for payments, migrations, deploys, data deletion
 ```
 

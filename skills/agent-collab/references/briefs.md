@@ -55,9 +55,5 @@ Report fixed / not fixed / regressed with evidence, including sibling bypasses.
 Flag changes to the design or affected surface that need wider review.
 ```
 
-## Handoff after interruption
-
-```
-State at <revision/diff hash>: done: <...>  half done: <...>  failing: <...>
-Decisions so far: <...>   Next step: <...>   Verification commands: <...>
-```
+Handoff after interruption: use the host tool's handoff template, adding the
+pinned revision or diff hash and the done / half done / failing state (SKILL.md §3).
